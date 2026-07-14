@@ -4,10 +4,12 @@
 # ARA TM — SSH User Configuration Script
 # Developer / توسعه‌دهنده: Parham_7991
 # ============================================================
-# This script configures the SSH user, password and authorized keys
-# inside the Railway Ubuntu container and then launches the SSH server.
-# این اسکریپت کاربر SSH، رمز عبور و کلیدهای مجاز را داخل کانتینر
-# اوبونتوی Railway تنظیم کرده و سپس سرور SSH را اجرا می‌کند.
+# This script configures the root password (required), an optional sudo user,
+# optional SSH authorized keys and the Claude Code auth token, then launches
+# the SSH server. Connect directly as root after deploy.
+# این اسکریپت رمز عبور root (الزامی)، یک کاربر sudo اختیاری، کلیدهای مجاز
+# اختیاری و توکن Claude Code را تنظیم کرده و سپس سرور SSH را اجرا می‌کند.
+# پس از دیپلوی مستقیماً با کاربر root متصل شوید.
 
 # Display language / زبان نمایش
 # Default is English. Set APP_LANG=fa for Persian.
@@ -25,6 +27,80 @@ msg() {
         echo "$en"
     fi
 }
+
+# ---------------------------------------------------------------
+# ROOT PASSWORD (MANDATORY) / رمز عبور root (الزامی)
+# ---------------------------------------------------------------
+# Root login is always enabled in the Dockerfile. A root password MUST be
+# supplied at deploy time — the container refuses to start without it.
+# ورود root همیشه در Dockerfile فعال است. باید حتماً رمز عبور root در زمان
+# دیپلوی ست شود؛ در غیر این صورت کانتینر اجازه راه‌اندازی نمی‌یابد.
+: ${ROOT_PASSWORD:=""}
+if [ -z "$ROOT_PASSWORD" ]; then
+    if [ "$APP_LANG" = "fa" ]; then
+        echo "خطا: متغیر محیطی ROOT_PASSWORD الزامی است. لطفاً یک رمز عبور برای root ست کنید." >&2
+    else
+        echo "Error: ROOT_PASSWORD is required. Please set a root password before deploying." >&2
+    fi
+    exit 1
+fi
+echo "root:$ROOT_PASSWORD" | chpasswd
+msg "Root password set — you can now connect as root" \
+    "رمز عبور root تنظیم شد — اکنون می‌توانید با کاربر root متصل شوید"
+
+# ---------------------------------------------------------------
+# OPTIONAL SUDO USER / کاربر sudo اختیاری
+# ---------------------------------------------------------------
+# A regular user is no longer required. Provide both SSH_USERNAME and
+# SSH_PASSWORD only if you also want a secondary sudo user.
+# کاربر عادی دیگر الزامی نیست. فقط در صورتی که می‌خواهید یک کاربر sudo
+# ثانویه داشته باشید، SSH_USERNAME و SSH_PASSWORD را با هم ست کنید.
+: ${SSH_USERNAME:=""}
+: ${SSH_PASSWORD:=""}
+
+if [ -n "$SSH_USERNAME" ] && [ -n "$SSH_PASSWORD" ]; then
+    if id "$SSH_USERNAME" &>/dev/null; then
+        msg "User $SSH_USERNAME already exists" "کاربر $SSH_USERNAME از قبل وجود دارد"
+    else
+        useradd -ms /bin/bash "$SSH_USERNAME"
+        echo "$SSH_USERNAME:$SSH_PASSWORD" | chpasswd
+        # Add user to sudo group / افزودن کاربر به گروه sudo
+        usermod -aG sudo "$SSH_USERNAME"
+        msg "User $SSH_USERNAME created with the provided password and added to sudo group" \
+            "کاربر $SSH_USERNAME با رمز عبور داده‌شده ایجاد و به گروه sudo اضافه شد"
+    fi
+elif [ -n "$SSH_USERNAME" ] || [ -n "$SSH_PASSWORD" ]; then
+    # Only one of the pair was provided — ignore and warn / فقط یکی ست شده — نادیده گرفته و هشدار
+    msg "SSH_USERNAME and SSH_PASSWORD must be set together; skipping extra user creation" \
+        "SSH_USERNAME و SSH_PASSWORD باید با هم ست شوند؛ ایجاد کاربر اضافه رد شد"
+fi
+
+# ---------------------------------------------------------------
+# OPTIONAL AUTHORIZED KEYS / کلیدهای مجاز اختیاری
+# ---------------------------------------------------------------
+# Set SSH public keys for key-based authentication (does not disable password login).
+# کلیدهای عمومی SSH را برای احراز هویت مبتنی بر کلید ست می‌کند (ورود با رمز غیرفعال نمی‌شود).
+: ${AUTHORIZED_KEYS:=""}
+if [ -n "$AUTHORIZED_KEYS" ]; then
+    mkdir -p /root/.ssh
+    echo "$AUTHORIZED_KEYS" > /root/.ssh/authorized_keys
+    chmod 700 /root/.ssh
+    chmod 600 /root/.ssh/authorized_keys
+    msg "Authorized keys set for root" "کلیدهای مجاز برای root تنظیم شد"
+else
+    msg "Authorized keys not set" "کلیدهای مجاز تنظیم نشدند"
+fi
+
+# ---------------------------------------------------------------
+# OPTIONAL CLAUDE CODE AUTH TOKEN / توکن اختیاری Claude Code
+# ---------------------------------------------------------------
+# The token is NOT baked in. Supply it via the ANTHROPIC_AUTH_TOKEN build arg
+# or (recommended) as a Railway environment variable — it is applied on every
+# container start, so editing it takes effect on the next deploy.
+# توکن بیک نمی‌شود. آن را از طریق آرگومان ساخت ANTHROPIC_AUTH_TOKEN یا
+# (توصیه می‌شود) به عنوان متغیر محیطی Railway ست کنید — روی هر اجرا اعمال
+# می‌شود، بنابراین ویرایش آن روی دیپلوی بعدی اثر می‌گذارد.
+: ${ANTHROPIC_AUTH_TOKEN:=""}
 
 # Configure Claude Code settings and inject the auth token (if provided)
 # پیکربندی تنظیمات Claude Code و تزریق توکن احراز هویت (در صورت وجود)
@@ -63,69 +139,10 @@ configure_claude_settings() {
     fi
 }
 
-# Set SSH_USERNAME and SSH_PASSWORD by default or from environment variables
-# مقدار پیش‌فرض SSH_USERNAME و SSH_PASSWORD را تنظیم می‌کند یا از متغیرهای محیطی می‌خواند
-: ${SSH_USERNAME:="myuser"}
-: ${SSH_PASSWORD:="mypassword"}
-
-# Set root password and enable direct root login by default
-# تنظیم رمز عبور root و فعال‌سازی ورود مستقیم با کاربر root به صورت پیش‌فرض
-: ${ROOT_PASSWORD:="rootpassword"}
-echo "root:$ROOT_PASSWORD" | chpasswd
-msg "Root password set" "رمز کاربر root تنظیم شد"
-
-# Set authorized keys if applicable
-# در صورت وجود، کلیدهای مجاز را تنظیم می‌کند
-: ${AUTHORIZED_KEYS:=""}
-
-# Set Claude Code auth token (overrides the built-in default at runtime)
-# تنظیم توکن احراز هویت Claude Code (در زمان اجرا پیش‌فرض داخلی را بازنویسی می‌کند)
-: ${ANTHROPIC_AUTH_TOKEN:=""}
-
-# Check if SSH_USERNAME or SSH_PASSWORD is empty and raise an error
-# بررسی خالی نبودن SSH_USERNAME و SSH_PASSWORD و صدور خطا در غیر این صورت
-if [ -z "$SSH_USERNAME" ] || [ -z "$SSH_PASSWORD" ]; then
-    if [ "$APP_LANG" = "fa" ]; then
-        echo "خطا: باید SSH_USERNAME و SSH_PASSWORD تنظیم شوند." >&2
-    else
-        echo "Error: SSH_USERNAME and SSH_PASSWORD must be set." >&2
-    fi
-    exit 1
-fi
-
-# Create the user with the provided username and set the password
-# ایجاد کاربر با نام کاربری داده‌شده و تنظیم رمز عبور آن
-if id "$SSH_USERNAME" &>/dev/null; then
-    msg "User $SSH_USERNAME already exists" "کاربر $SSH_USERNAME از قبل وجود دارد"
-else
-    useradd -ms /bin/bash "$SSH_USERNAME"
-    echo "$SSH_USERNAME:$SSH_PASSWORD" | chpasswd
-    # Add user to sudo group / افزودن کاربر به گروه sudo
-    usermod -aG sudo "$SSH_USERNAME"
-    msg "User $SSH_USERNAME created with the provided password and added to sudo group" \
-        "کاربر $SSH_USERNAME با رمز عبور داده‌شده ایجاد و به گروه sudo اضافه شد"
-fi
-
-# Apply Claude Code settings (and inject the auth token if provided)
-# اعمال تنظیمات Claude Code (و تزریق توکن احراز هویت در صورت وجود)
 configure_claude_settings
 
-# Set the authorized keys from the AUTHORIZED_KEYS environment variable (if provided)
-# تنظیم کلیدهای مجاز از متغیر محیطی AUTHORIZED_KEYS (در صورت وجود)
-if [ -n "$AUTHORIZED_KEYS" ]; then
-    mkdir -p /home/$SSH_USERNAME/.ssh
-    echo "$AUTHORIZED_KEYS" > /home/$SSH_USERNAME/.ssh/authorized_keys
-    chown -R $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/.ssh
-    chmod 700 /home/$SSH_USERNAME/.ssh
-    chmod 600 /home/$SSH_USERNAME/.ssh/authorized_keys
-    msg "Authorized keys set for user $SSH_USERNAME" "کلیدهای مجاز برای کاربر $SSH_USERNAME تنظیم شد"
-    # Disable password authentication if authorized keys are provided
-    # در صورت ارائه کلیدهای مجاز، احراز هویت با رمز عبور غیرفعال می‌شود
-    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-else
-    msg "Authorized keys not set" "کلیدهای مجاز تنظیم نشدند"
-fi
-
-# Start the SSH server / راه‌اندازی سرور SSH
+# ---------------------------------------------------------------
+# START SSH SERVER / راه‌اندازی سرور SSH
+# ---------------------------------------------------------------
 msg "Starting SSH server..." "در حال راه‌اندازی سرور SSH..."
 exec /usr/sbin/sshd -D

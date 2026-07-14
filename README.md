@@ -1,279 +1,148 @@
-# ARA TM — Railway Docker Ubuntu SSH Server
-
-> Developer / توسعه‌دهنده: **Parham_7991**
-
-![Platform](https://img.shields.io/badge/platform-Railway-blue)
-![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-orange)
-![SSH](https://img.shields.io/badge/SSH-OpenSSH-green)
-![Claude Code](https://img.shields.io/badge/Claude_Code-included-purple)
-![Languages](https://img.shields.io/badge/languages-FA%20%2F%20EN-important)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
-**Your own cloud workstation on Railway — SSH in as root, with Claude Code pre-installed and ready to go.**
-
-**ایستگاه کاری ابری مخصوص خودت روی Railway — با دسترسی root از طریق SSH و Claude Code از پیش نصب‌شده و آماده به کار.**
-
-A Docker image designed for Railway deployment that provides an Ubuntu 24.04 base with SSH server enabled (SSHD). This allows you to connect to your Railway container via SSH for remote access and management.
-
-ایمیج داکری طراحی‌شده برای دیپلوی روی Railway که بر پایه Ubuntu 24.04 با سرور SSH فعال (SSHD) است. این امکان را فراهم می‌کند که از طریق SSH به کانتینر Railway خود متصل شوید تا به صورت از راه دور به آن دسترسی داشته و آن را مدیریت کنید.
-
-## Features / ویژگی‌ها
-
-- Ubuntu 24.04 base image / ایمیج پایه Ubuntu 24.04
-- SSH server (OpenSSH) pre-configured / سرور SSH (OpenSSH) از پیش پیکربندی‌شده
-- Password authentication enabled / احراز هویت با رمز عبور فعال
-- Root login enabled by default (connect directly as root) / ورود root به صورت پیش‌فرض فعال (اتصال مستقیم با کاربر root)
-- Created user has sudo permissions / کاربر ایجادشده دسترسی sudo دارد
-- Network utilities included (ping, telnet, iproute2, curl, wget) / ابزارهای شبکه موجود (ping, telnet, iproute2, curl, wget)
-- Essential developer tools (git, vim, nano, htop, tmux, unzip, zip, build-essential) / ابزارهای اصلی توسعه (git, vim, nano, htop, tmux, unzip, zip, build-essential)
-- Node.js and npm pre-installed (required for Claude Code) / Node.js و npm از پیش نصب‌شده (لازم برای Claude Code)
-- **Claude Code** (Anthropic official CLI) pre-installed / **Claude Code** (رابط خط فرمان رسمی Anthropic) از پیش نصب‌شده
-- Bilingual runtime messages (English / Persian) / پیام‌های دوزبانه هنگام اجرا (انگلیسی / فارسی)
-
-## ⚠️ Important Notice / هشدار مهم
-
-**Railway runs Docker containers, not VPS!** Any data stored in the container will be **lost when redeploying**. This includes files created after deployment, installed packages, configuration changes and user data. If you need persistent storage, consider using Railway's volume mounts or external storage solutions.
-
-**Railway کانتینرهای داکر اجرا می‌کند، نه VPS!** هر داده‌ای که در کانتینر ذخیره شود هنگام redeploy **از دست می‌رود**. این شامل فایل‌های ایجادشده بعد از دیپلوی، بسته‌های نصب‌شده، تغییرات پیکربندی و داده‌های کاربر است. اگر به ذخیره‌سازی ماندگار نیاز دارید، از Volumeهای Railway یا راهکارهای ذخیره‌سازی خارجی استفاده کنید.
-
-## Setup Instructions / دستورالعمل راه‌اندازی
-
-### STEP 1: Configure SSH Credentials / تنظیم اعتبارنامه SSH
-
-#### Option 1: Modify ssh-user-config.sh / گزینه ۱: ویرایش فایل ssh-user-config.sh
-
-1. **Before deploying**, edit the `ssh-user-config.sh` file and change the default values:
-
-   ۱. **پیش از دیپلوی**، فایل `ssh-user-config.sh` را ویرایش کرده و مقادیر پیش‌فرض را تغییر دهید:
-
-   ```bash
-   # Change these default values to your desired credentials
-   # این مقادیر پیش‌فرض را به اعتبارنامه دلخواه خود تغییر دهید
-   : ${SSH_USERNAME:="myuser"}
-   : ${SSH_PASSWORD:="mypassword"}
-   ```
-
-2. Commit and push your changes to your repository / کامیت و پوش کردن تغییرات به مخزن خود
-3. **Then** deploy to Railway / **سپس** روی Railway دیپلوی کنید
-
-#### Option 2: Use Railway Environment Variables / گزینه ۲: استفاده از متغیرهای محیطی Railway
-
-1. **Deploy** to Railway / **دیپلوی** روی Railway
-2. Go to your project dashboard / به داشبورد پروژه خود بروید
-3. Navigate to **Settings** → **Variables**: / به مسیر **Settings** ← **Variables** بروید:
-
-   ![Environment Variables](assets/env-variables.png)
-
-4. Add the following environment variables / متغیرهای محیطی زیر را اضافه کنید:
-   - `SSH_USERNAME` - Your desired username / نام کاربری دلخواه
-   - `SSH_PASSWORD` - Your desired password / رمز عبور دلخواه
-   - `ROOT_PASSWORD` - Root password (default: `rootpassword`; set a strong one) / رمز root (پیش‌فرض: `rootpassword`؛ یک رمز قوی تنظیم کنید)
-   - `AUTHORIZED_KEYS` - SSH public keys for key-based authentication (optional) / کلیدهای عمومی SSH برای احراز هویت مبتنی بر کلید (اختیاری)
-   - `APP_LANG` - Display language: `en` (default) or `fa` for Persian / زبان نمایش: `en` (پیش‌فرض) یا `fa` برای فارسی
-
-5. Redeploy your project to apply the new environment variables: / پروژه را برای اعمال متغیرهای جدید مجدداً دیپلوی کنید:
-
-   ![Environment Redeploy](assets/env-redeploy.png)
-
-### STEP 2: Configure TCP Proxy / تنظیم TCP Proxy
-
-1. Go to your Railway project dashboard / به داشبورد پروژه Railway خود بروید
-2. Navigate to **Settings** → **Networking**: / به مسیر **Settings** ← **Networking** بروید:
-
-   ![Railway Settings](assets/railway-settings.png)
-
-3. Under **Public Networking**, click **TCP Proxy** / در بخش **Public Networking** روی **TCP Proxy** کلیک کنید
-4. Enter the exposed port `22` (the default SSH port): / پورت `22` (پورت پیش‌فرض SSH) را وارد کنید:
-
-   ![TCP Port Configuration](assets/tcp-port.png)
-
-5. Click **Add Proxy** / روی **Add Proxy** کلیک کنید
-
-### STEP 3: Redeploy the Project / مرحله ۳: دیپلوی مجدد پروژه
-
-After configuring the TCP proxy, redeploy your project to apply the networking changes:
-
-بعد از تنظیم TCP Proxy، پروژه را برای اعمال تغییرات شبکه مجدداً دیپلوی کنید:
-
-![Project Redeploy](assets/project-redeploy.png)
-
-### STEP 4: Connect via SSH / مرحله ۴: اتصال از طریق SSH
-
-1. Once deployed, Railway will provide you with a domain and port for TCP access: / پس از دیپلوی، Railway دامنه و پورتی برای دسترسی TCP در اختیار شما قرار می‌دهد:
-
-   ![TCP Domain and Port](assets/tcp-domain-and-port.png)
-
-2. Use the SSH command to connect: / برای اتصال از دستور SSH استفاده کنید:
-   ```bash
-   ssh {username}@{domain} -p {port}
-   ```
-   Example / مثال:
-   ```bash
-   ssh myuser@mainline.proxy.rlwy.net -p 30899
-   ```
-
-3. When prompted about the host authenticity, type `yes` to accept the new key pair / هنگامی که از اصالت میزبان سؤال شد، `yes` تایپ کنید تا جفت کلید جدید پذیرفته شود
-4. Enter the user password when prompted / رمز عبور کاربر را وقتی درخواست شد وارد کنید
-5. You're now connected to your Railway container via SSH! / اکنون از طریق SSH به کانتینر Railway خود متصل هستید!
-
-## Using Claude Code / استفاده از Claude Code
-
-[Claude Code](https://github.com/anthropics/claude-code) (the official Anthropic CLI) is pre-installed in this image, so you can run it directly inside your Railway container after connecting via SSH.
-
-[Claude Code](https://github.com/anthropics/claude-code) (رابط خط فرمان رسمی Anthropic) از پیش روی این ایمیج نصب شده است، بنابراین پس از اتصال از طریق SSH می‌توانید آن را مستقیماً داخل کانتینر Railway اجرا کنید.
-
-1. Connect via SSH as described in STEP 4. / طبق مرحله ۴ از طریق SSH متصل شوید.
-2. Verify the installation: / نصب بودن را تأیید کنید:
-   ```bash
-   claude --version
-   ```
-3. Authenticate and start: / احراز هویت کرده و اجرا کنید:
-   ```bash
-   claude
-   ```
-   - Use `ANTHROPIC_API_KEY` for API-based access, or log in with your Anthropic account when prompted. / برای دسترسی از طریق API از `ANTHROPIC_API_KEY` استفاده کنید یا هنگام درخواست با حساب Anthropic خود وارد شوید.
-
-**Note:** Claude Code requires a TTY and a valid Anthropic API key or account login. Set `ANTHROPIC_API_KEY` as a Railway environment variable if you want it available on startup.
-
-**نکته:** Claude Code به یک TTY و کلید API معتبر Anthropic یا ورود به حساب نیاز دارد. اگر می‌خواهید هنگام راه‌اندازی در دسترس باشد، `ANTHROPIC_API_KEY` را به عنوان متغیر محیطی Railway تنظیم کنید.
-
-### Claude Code Settings / تنظیمات Claude Code
-
-The image ships a Claude Code settings file (`~/.claude/settings.json`) pre-configured with the ARA TM defaults:
-
-ایمیج به همراه فایل تنظیمات Claude Code (`~/.claude/settings.json`) از پیش پیکربندی‌شده با پیش‌فرض‌های ARA TM عرضه می‌شود:
-
-```json
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
-    "ANTHROPIC_AUTH_TOKEN": "<your token>",
-    "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "tencent/hy3:free",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "tencent/hy3:free",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "tencent/hy3:free"
-  },
-  "theme": "dark"
-}
-```
-
-- **Auth token / توکن احراز هویت:** Everything else is a fixed default; only the token is dynamic and is **not** baked in. You must supply it yourself:
-  - **At build time** with a build arg: / همه چیز پیش‌فرض ثابت است و فقط توکن پویا است و بیک **نمی‌شود**. باید خودتان آن را تامین کنید:
-    - **موقع ساخت (build)** با آرگومان ساخت:
-      ```bash
-      docker build --build-arg ANTHROPIC_AUTH_TOKEN="sk-or-v1-..." -t ara-tm-ssh .
-      ```
-  - **At runtime / on every deploy** by setting the `ANTHROPIC_AUTH_TOKEN` environment variable on Railway. The `ssh-user-config.sh` script rewrites the token in the settings file on each container start, so editing the token is applied automatically on the next deploy:
-    - **در زمان اجرا / روی هر دیپلوی** با تنظیم متغیر محیطی `ANTHROPIC_AUTH_TOKEN` روی Railway. اسکریپت `ssh-user-config.sh` توکن را در هر بار اجرای کانتینر در فایل تنظیمات بازنویسی می‌کند، بنابراین ویرایش توکن روی دیپلوی بعدی به طور خودکار اعمال می‌شود:
-      ```
-      ANTHROPIC_AUTH_TOKEN=sk-or-v1-your-new-token
-      ```
-- **Models / مدل‌ها:** All three model tiers default to `tencent/hy3:free` via OpenRouter. Change them in `claude-settings.json` if needed. / هر سه سطح مدل پیش‌فرضاً روی `tencent/hy3:free` از طریق OpenRouter هستند. در صورت نیاز در `claude-settings.json` تغییر دهید.
-- **Theme / تم:** `dark` by default. / پیش‌فرض `dark`.
-
-**⚠️ Security:** The auth token is never baked into the image — it must be provided via the `ANTHROPIC_AUTH_TOKEN` build arg or Railway environment variable. Keep your token private and do not commit it to the repository.
-
-**⚠️ امنیت:** توکن احراز هویت هرگز داخل ایمیج بیک نمی‌شود و باید از طریق آرگومان ساخت `ANTHROPIC_AUTH_TOKEN` یا متغیر محیطی Railway تامین شود. توکن خود را محرمانه نگه دارید و در مخزن کامیت نکنید.
-
-### Quick command / دستور سریع
-
-A helper command `cl` is available (also aliased as `زم`). It opens a tmux session named `claude` and runs Claude Code inside it. If the session already exists, it attaches to it.
-
-یک دستور کمکی `cl` در دسترس است (با نام دوم `زم` نیز). این دستور یک نشست tmux به نام `claude` باز کرده و Claude Code را در آن اجرا می‌کند. اگر نشست از قبل وجود داشته باشد، به آن متصل می‌شود.
-
-```bash
-cl      # or / یا:  زم
-```
-
-To detach from the session without closing it, press `Ctrl+B` then `D`.
-
-برای جدا شدن از نشست بدون بستن آن، کلیدهای `Ctrl+B` و سپس `D` را بزنید.
-
-## Configuration Details / جزئیات پیکربندی
-
-### Default Values / مقادیر پیش‌فرض
-
-The current default values in `ssh-user-config.sh` are / مقادیر پیش‌فرض فعلی در `ssh-user-config.sh`:
-- `SSH_USERNAME=myuser`
-- `SSH_PASSWORD=mypassword`
-
-**⚠️ Important:** Change default values before deploying to production.
-
-**⚠️ مهم:** پیش از دیپلوی در محیط production، مقادیر پیش‌فرض را تغییر دهید.
-
-### Environment Variable Priority / اولویت متغیرهای محیطی
-
-The system checks for credentials in this order / سیستم اعتبارنامه‌ها را به این ترتیب بررسی می‌کند:
-1. Railway environment variables (highest priority) / متغیرهای محیطی Railway (بالاترین اولویت)
-2. Values set directly in `ssh-user-config.sh` (default if no environment variables) / مقادیر تنظیم‌شده در `ssh-user-config.sh` (پیش‌فرض در صورت نبود متغیر محیطی)
-
-### Root Access / دسترسی root
-
-Root login is **enabled by default** so you can connect directly as `root`. A root password is always created from the `ROOT_PASSWORD` environment variable (default: `rootpassword`).
-
-ورود کاربر root به صورت پیش‌فرض **فعال** است تا بتوانید مستقیماً با کاربر `root` متصل شوید. رمز عبور root همیشه از متغیر محیطی `ROOT_PASSWORD` ساخته می‌شود (پیش‌فرض: `rootpassword`).
-
-The Dockerfile enables root login with / Dockerfile ورود root را با این خط فعال می‌کند:
-
-```dockerfile
-&& echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-```
-
-**⚠️ Important:** Change the default root password before deploying to production. Set `ROOT_PASSWORD` via Railway environment variables or in `ssh-user-config.sh`.
-
-**⚠️ مهم:** پیش از دیپلوی در محیط production، رمز پیش‌فرض root را تغییر دهید. مقدار `ROOT_PASSWORD` را از طریق متغیرهای محیطی Railway یا در `ssh-user-config.sh` تنظیم کنید.
-
-**Note:** The created user (`SSH_USERNAME`) still has sudo permissions and is added to the sudo group.
-
-**نکته:** کاربر ایجادشده (`SSH_USERNAME`) همچنان دسترسی sudo دارد و به گروه sudo اضافه شده است.
-
-### Display Language / زبان نمایش
-
-Runtime messages are shown in English by default. To switch the container's startup messages to Persian, set the `APP_LANG` environment variable to `fa`:
-
-پیام‌های هنگام اجرا به صورت پیش‌فرض به انگلیسی نمایش داده می‌شوند. برای تغییر پیام‌های راه‌اندازی کانتینر به فارسی، متغیر محیطی `APP_LANG` را روی `fa` تنظیم کنید:
-
-```bash
-APP_LANG=fa
-```
-
-- `en` - English (default) / انگلیسی (پیش‌فرض)
-- `fa` - Persian / فارسی
-
-## Security Considerations / نکات امنیتی
-
-- **CRITICAL:** Always change the default SSH credentials in `ssh-user-config.sh` before deploying to production / **بحرانی:** همیشه پیش از دیپلوی در محیط production، اعتبارنامه پیش‌فرض SSH را در `ssh-user-config.sh` تغییر دهید
-- Root login is enabled by default — always set a strong `ROOT_PASSWORD` / ورود root به صورت پیش‌فرض فعال است — همیشه یک `ROOT_PASSWORD` قوی تنظیم کنید
-- Only password authentication is enabled by default / به صورت پیش‌فرض فقط احراز هویت با رمز عبور فعال است
-- The default user has sudo privileges for administrative tasks / کاربر پیش‌فرض برای کارهای مدیریتی دسترسی sudo دارد
-- Consider using SSH keys (`AUTHORIZED_KEYS`) instead of passwords for better security / برای امنیت بیشتر از کلیدهای SSH (`AUTHORIZED_KEYS`) به جای رمز عبور استفاده کنید
-- When using `AUTHORIZED_KEYS`, password authentication is automatically disabled / هنگام استفاده از `AUTHORIZED_KEYS`، احراز هویت با رمز عبور به طور خودکار غیرفعال می‌شود
-
-## Container Limitations / محدودیت‌های کانتینر
-
-- **No persistent storage:** All data is lost when redeploying. / **بدون ذخیره‌سازی ماندگار:** همه داده‌ها هنگام redeploy از دست می‌روند.
-- **Not a VPS:** This is a containerized environment, not a virtual private server / **VPS نیست:** این یک محیط کانتینری است، نه سرور خصوصی مجازی
-- **Temporary file system:** Any files created inside the image will be lost on restart/redeploy / **سیستم فایل موقت:** هر فایلی داخل ایمیج ایجاد شود روی restart/redeploy از دست می‌رود
-
-**Important:** Consider using **Railway Volume Mount** for persistent storage.
-
-**مهم:** برای ذخیره‌سازی ماندگار از **Railway Volume Mount** استفاده کنید.
-
-## Troubleshooting / عیب‌یابی
-
-- Ensure the TCP proxy is configured correctly on Railway / اطمینان حاصل کنید که TCP Proxy روی Railway به درستی پیکربندی شده است
-- Verify the correct domain and port are being used / دامنه و پورت صحیح استفاده می‌شوند را بررسی کنید
-- Check that the container is running and healthy / بررسی کنید که کانتینر در حال اجرا و سالم است
-- Confirm firewall settings allow SSH connections / تنظیمات فایروال اجازه اتصال SSH را می‌دهد را تأیید کنید
-- Verify credentials are set correctly in `ssh-user-config.sh` or Railway environment variables / اعتبارنامه‌ها به درستی در `ssh-user-config.sh` یا متغیرهای محیطی Railway تنظیم شده‌اند را بررسی کنید
-- Remember that data loss occurs on every redeploy / به یاد داشته باشید که در هر بار redeploy داده‌ها از دست می‌روند
-
-## License / مجوز
-
-This project is licensed under the terms included in the LICENSE file.
-
-این پروژه تحت شرایط مندرج در فایل LICENSE منتشر شده است.
+<p align="center">
+  <img src="assets/railway-settings.png" alt="ARA TM" width="120"/>
+</p>
+
+<h1 align="center">ARA TM — Railway Ubuntu SSH Server 🚂</h1>
+
+<p align="center">
+  <b>Your own cloud workstation on Railway</b> — SSH in as <b>root</b>, with <b>Claude Code</b> pre-installed and ready to go.
+  <br/>
+  <b>ایستگاه کاری ابری مخصوص خودت روی Railway</b> — با دسترسی root از طریق SSH و Claude Code از پیش نصب‌شده.
+</p>
+
+<p align="center">
+  🇬🇧 English &nbsp;·&nbsp; 🇮🇷 <a href="README.fa.md">فارسی</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Railway-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/Ubuntu-24.04-orange" alt="Ubuntu">
+  <img src="https://img.shields.io/badge/SSH-OpenSSH-green" alt="SSH">
+  <img src="https://img.shields.io/badge/Claude_Code-included-purple" alt="Claude Code">
+  <img src="https://img.shields.io/badge/languages-English%20%2F%20Persian-important" alt="Languages">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
+</p>
 
 ---
 
-© ARA TM — Maintained by / نگهداری شده توسط **Parham_7991**
+A Docker image built for **Railway** that provides an **Ubuntu 24.04** base with an **SSH server (SSHD)** enabled, a **mandatory root password**, a full developer toolkit, and **Claude Code** pre-installed. Connect to your container over SSH and use it as a portable cloud workstation — or pair it with Claude Code for an AI-assisted terminal.
+
+ایمیج داکری ساخته‌شده برای **Railway** که بر پایه **Ubuntu 24.04** با سرور **SSH (SSHD)** فعال، **رمز عبور اجباری root**، یک جعبه‌ابزار کامل توسعه و **Claude Code** از پیش نصب‌شده است. از طریق SSH به کانتینر خود متصل شوید و از آن به عنوان ایستگاه کاری ابری قابل‌حمل استفاده کنید — یا با Claude Code ترمینالی هوشمند داشته باشید.
+
+## ✨ Features / ویژگی‌ها
+
+- 🐧 **Ubuntu 24.04** base image / ایمیج پایه Ubuntu 24.04
+- 🔑 **Root login enabled** — connect directly as `root` / ورود root فعال — مستقیماً با `root` وصل شوید
+- 🛡️ **Mandatory root password** — deploy fails safely if `ROOT_PASSWORD` is missing / رمز عبور root **اجباری** — اگر ست نشده باشد دیپلوی ایمن متوقف می‌شود
+- 👤 Optional secondary sudo user (`SSH_USERNAME` / `SSH_PASSWORD`) / کاربر sudo ثانویه اختیاری
+- 🌐 Network & dev toolkit: `curl`, `wget`, `git`, `vim`, `nano`, `micro`, `htop`, `btop`, `ncdu`, `tmux`, `zsh`, Python 3, Node.js + npm / ابزارهای شبکه و توسعه
+- 🧠 **Claude Code** (Anthropic official CLI) pre-installed, with a `cl` / `زم` command / **Claude Code** از پیش نصب‌شده با دستور `cl` / `زم`
+- 🌍 English + Persian locales (`en_US.UTF-8`, `fa_IR.UTF-8`) / لوکِیل انگلیسی و فارسی
+- 🎨 ARA TM welcome banner on login / بنر خوش‌آمد ARA TM هنگام ورود
+- 🗣️ Bilingual runtime messages (`APP_LANG=fa` for Persian) / پیام‌های دوزبانه هنگام اجرا
+
+## ⚠️ Important Notice / هشدار مهم
+
+**Railway runs Docker containers, not a VPS!** Any data stored in the container is **lost on every redeploy** — files, installed packages, config changes and user data. For persistent storage use Railway Volume Mounts or external storage.
+
+**Railway کانتینرهای داکر اجرا می‌کند، نه VPS!** هر داده‌ای در کانتینر هنگام هر بار redeploy **از دست می‌رود** — فایل‌ها، بسته‌ها، تغییرات پیکربندی و داده‌های کاربر. برای ذخیره‌سازی ماندگار از Volumeهای Railway استفاده کنید.
+
+## 🚀 Deploy to Railway / دیپلوی روی Railway
+
+1. Fork or clone this repository and connect it to a new **Railway** project.
+   مخزن را Fork یا Clone کنید و به یک پروژه جدید **Railway** متصل کنید.
+2. Go to **Settings → Variables** and set at least `ROOT_PASSWORD` (required).
+   به **Settings → Variables** بروید و حداقل `ROOT_PASSWORD` (الزامی) را ست کنید.
+3. Go to **Settings → Networking → Public Networking** and add a **TCP Proxy** on port `22`.
+   به **Settings → Networking → Public Networking** بروید و یک **TCP Proxy** روی پورت `22` اضافه کنید.
+4. **Redeploy**. Railway will give you a domain and port for SSH access.
+   **Redeploy** کنید. Railway دامنه و پورتی برای دسترسی SSH در اختیار شما می‌گذارد.
+
+## 🌱 Environment Variables / متغیرهای محیطی
+
+| Variable | Required | Default | Description |
+|----------|:--------:|---------|-------------|
+| `ROOT_PASSWORD` | ✅ Yes | — | Password for the **root** user. **Mandatory** — the container will not start without it. / رمز کاربر **root**. **الزامی** — بدون آن کانتینر اجرا نمی‌شود. |
+| `SSH_USERNAME` | ⬜ No | — | Optional secondary sudo user. Must be set together with `SSH_PASSWORD`. / کاربر sudo ثانویه اختیاری. باید با `SSH_PASSWORD` ست شود. |
+| `SSH_PASSWORD` | ⬜ No | — | Password for the optional user. / رمز کاربر اختیاری. |
+| `AUTHORIZED_KEYS` | ⬜ No | — | SSH public key(s) for root key-based auth (password login stays on). / کلید(های) عمومی SSH برای root. |
+| `ANTHROPIC_AUTH_TOKEN` | ⬜ No | — | Token for Claude Code (OpenRouter / Anthropic). Applied on every deploy. / توکن Claude Code. روی هر دیپلوی اعمال می‌شود. |
+| `APP_LANG` | ⬜ No | `en` | Runtime message language: `en` or `fa`. / زبان پیام‌ها: `en` یا `fa`. |
+
+> The Claude Code connection (`ANTHROPIC_BASE_URL`, model names, theme) is pre-configured in `claude-settings.json` and points to **OpenRouter** by default.
+> اتصال Claude Code (آدرس پایه، نام مدل‌ها، تم) از پیش در `claude-settings.json` تنظیم شده و پیش‌فرض روی **OpenRouter** است.
+
+## 🔌 Connect via SSH / اتصال از طریق SSH
+
+Once deployed, connect directly as root:
+
+```bash
+ssh root@<your-railway-domain> -p <port>
+```
+
+When prompted, type `yes` to accept the host key, then enter your `ROOT_PASSWORD`.
+
+## 🧠 Using Claude Code / استفاده از Claude Code
+
+[Claude Code](https://github.com/anthropics/claude-code) is pre-installed. After connecting via SSH:
+
+پس از اتصال از طریق SSH، Claude Code از پیش نصب شده است:
+
+```bash
+claude --version      # verify / بررسی نصب بودن
+cl                    # or / یا:  زم   → opens a tmux session running Claude Code
+```
+
+The `cl` (also `زم`) command opens a **tmux** session named `claude` and runs Claude Code inside it. Press `Ctrl+B` then `D` to detach without closing.
+
+دستور `cl` (و `زم`) یک نشست **tmux** به نام `claude` باز کرده و Claude Code را در آن اجرا می‌کند. برای جدا شدن `Ctrl+B` و سپس `D` را بزنید.
+
+### Auth token / توکن احراز هویت
+
+The token is **never baked into the image**. Provide it via:
+
+توکن **هرگز داخل ایمیج بیک نمی‌شود**. آن را از طریق یکی از روش‌ها وارد کنید:
+
+- **Build arg:** `docker build --build-arg ANTHROPIC_AUTH_TOKEN="sk-or-..." -t ara-ssh .`
+- **Railway env var:** set `ANTHROPIC_AUTH_TOKEN` — it is rewritten into the settings on every container start, so editing it applies on the next deploy.
+  **متغیر محیطی Railway:** `ANTHROPIC_AUTH_TOKEN` را ست کنید — روی هر اجرا در تنظیمات بازنویسی می‌شود، پس ویرایش آن روی دیپلوی بعدی اثر می‌گذارد.
+
+## 📦 Included Packages / بسته‌های موجود
+
+**Network / شبکه:** `curl`, `wget`, `iproute2`, `iputils-ping`, `net-tools`, `dnsutils`, `traceroute`, `whois`, `telnet`, `nmap`
+**Editors / ویرایشگر:** `vim`, `nano`, `micro`
+**Monitoring / مانیتورینگ:** `htop`, `btop`, `ncdu`, `neofetch`
+**Terminal / ترمینال:** `tmux`, `screen`, `less`, `tree`, `bat`, `ripgrep`, `fd-find`, `jq`, `zsh`
+**Archives / آرشیو:** `unzip`, `zip`, `tar`, `gzip`, `bzip2`, `xz-utils`, `p7zip-full`
+**Dev / توسعه:** `git`, `build-essential`, `cmake`, `pkg-config`, `autoconf`, `automake`, `libtool`, `gcc`, `g++`, `python3`, `python3-pip`, `python3-venv`, `nodejs`, `npm`
+**Locales / لوکِیل:** `locales`, `language-pack-en`, `language-pack-fa`
+
+## 🔒 Security / امنیت
+
+- **Root password is mandatory** — never deploy without `ROOT_PASSWORD`. / رمز root **الزامی** است.
+- Change the default password after first login. / پس از اولین ورود رمز را تغییر دهید.
+- The Claude Code token is **never** stored in the image — keep it private. / توکن Claude Code هرگز در ایمیج ذخیره نمی‌شود.
+- Consider `AUTHORIZED_KEYS` for key-only access on top of the password. / برای دسترسی مبتنی بر کلید، `AUTHORIZED_KEYS` را در نظر بگیرید.
+
+## 📦 Container Limitations / محدودیت‌های کانتینر
+
+- **No persistent storage** — data is lost on redeploy. / بدون ذخیره‌سازی ماندگار.
+- **Not a VPS** — it is a containerized environment. / VPS نیست، محیط کانتینری است.
+- Use **Railway Volume Mount** for persistent data. / برای داده ماندگار از Volume استفاده کنید.
+
+## 🩺 Troubleshooting / عیب‌یابی
+
+- Ensure the TCP proxy is configured on port `22`. / TCP proxy روی پورت ۲۲ ست باشد.
+- Verify the correct domain and port from the Railway dashboard. / دامنه و پورت صحیح را چک کنید.
+- If the container crashes at start, check that `ROOT_PASSWORD` is set. / اگر کانتینر crash می‌کند، `ROOT_PASSWORD` ست شده باشد.
+- Remember data loss on every redeploy. / فراموش نکنید داده‌ها روی هر دیپلوی پاک می‌شوند.
+
+## 📄 License / مجوز
+
+Released under the MIT License — see [LICENSE](LICENSE).
+
+---
+
+<p align="center">
+  © ARA TM · Maintained by <b>Parham_7991</b> · Built for Railway 🚂
+</p>
