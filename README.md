@@ -58,6 +58,25 @@ A Docker image built for **Railway** that provides an **Ubuntu 24.04** base with
 4. **Redeploy**. Railway will give you a domain and port for SSH access.
    **Redeploy** کنید. Railway دامنه و پورتی برای دسترسی SSH در اختیار شما می‌گذارد.
 
+## 📦 Railway Template / تمپلیت Railway
+
+This repo ships two Railway config files so it can be deployed as a template:
+
+این ریپو دو فایل کانفیگ Railway دارد تا به عنوان تمپلیت دیپلوی شود:
+
+- **`railway.json`** — Railway project config (Dockerfile builder, start command, restart policy, healthcheck). Used automatically when you deploy this repo.
+  کانفیگ پروژه Railway (سازنده Dockerfile، دستور اجرا، سیاست ری‌استارت، هلث‌چک). هنگام دیپلوی ریپو خودکار استفاده می‌شود.
+- **`railway-template.json`** — a complete, shareable Railway template manifest: service definition, required/optional variables (with descriptions), and the **TCP Proxy on port 22** pre-configured.
+  یک منیفست تمپلیت کامل و قابل اشتراک Railway: تعریف سرویس، متغیرهای اجباری/اختیاری (با توضیحات)، و **TCP Proxy روی پورت ۲۲** از پیش تنظیم‌شده.
+
+**To deploy / برای دیپلوی:**
+1. Connect this repo to a new Railway project (or import `railway-template.json`).
+   این ریپو را به یک پروژه جدید Railway متصل کنید (یا `railway-template.json` را Import کنید).
+2. Set `ROOT_PASSWORD` (required). The TCP proxy on port 22 is created automatically by the template.
+   `ROOT_PASSWORD` (اجباری) را ست کنید. پروکسی TCP روی پورت ۲۲ توسط تمپلیت به طور خودکار ساخته می‌شود.
+3. Redeploy and connect with `ssh root@<domain> -p <port>`.
+   Redeploy کنید و با `ssh root@<domain> -p <port>` وصل شوید.
+
 ## 🌱 Environment Variables / متغیرهای محیطی
 
 | Variable | Required | Default | Description |
