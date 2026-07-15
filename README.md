@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://railway.com/deploy/HBy607?referralCode=MPE9e1&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"></a>
+  <a href="https://railway.com/deploy/ubuntu-ssh-claude"><img src="https://railway.com/button.svg" alt="Deploy on Railway"></a>
 </p>
 
 ---
