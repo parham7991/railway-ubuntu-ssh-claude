@@ -53,30 +53,8 @@ RUN locale-gen en_US.UTF-8 fa_IR.UTF-8
 
 # ARA TM welcome banner shown on interactive SSH login
 # بنر خوش‌آمد ARA TM که هنگام ورود تعاملی SSH نمایش داده می‌شود
-RUN mkdir -p /usr/local/share/ara \
-    && { \
-        echo ' █████ █████ █████'; \
-        echo ' █   █ █   █ █   █'; \
-        echo ' █████ █████ █████'; \
-        echo ' █   █ █  █  █   █'; \
-        echo ' █   █ █   █ █   █'; \
-        echo '       TM · CLOUD SHELL'; \
-    } > /usr/local/share/ara/logo.txt \
-    && { \
-        echo '#!/bin/bash'; \
-        echo '# ARA TM — fancy SSH login banner / بنر ورود SSH زیبای ARA TM'; \
-        echo 'if [ -t 1 ]; then'; \
-        echo '  CLAUDE="not installed"'; \
-        echo '  command -v claude >/dev/null 2>&1 && CLAUDE="ready"'; \
-        echo '  neofetch --source /usr/local/share/ara/logo.txt --ascii_colors 6 4 \'; \
-        echo '    --disable resolution de wm wm_theme theme icons \'; \
-        echo '    --exec "Brand" "ARA TM · Cloud Shell" \'; \
-        echo '    --exec "Developer" "Parham_7991" \'; \
-        echo '    --exec "Claude Code" "$CLAUDE" 2>/dev/null \'; \
-        echo '    || { cat /usr/local/share/ara/logo.txt; echo "Developer: Parham_7991"; echo "Claude Code: $CLAUDE"; }'; \
-        echo 'fi'; \
-    } > /etc/profile.d/ara-welcome.sh \
-    && chmod +x /etc/profile.d/ara-welcome.sh
+COPY ara-welcome.sh /etc/profile.d/ara-welcome.sh
+RUN chmod +x /etc/profile.d/ara-welcome.sh
 
 # Set locale and terminal environment / تنظیم لوکِیل و محیط ترمینال
 ENV LANG=en_US.UTF-8
