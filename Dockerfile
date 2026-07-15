@@ -53,17 +53,28 @@ RUN locale-gen en_US.UTF-8 fa_IR.UTF-8
 
 # ARA TM welcome banner shown on interactive SSH login
 # بنر خوش‌آمد ARA TM که هنگام ورود تعاملی SSH نمایش داده می‌شود
-RUN { \
-    echo 'if [ -t 1 ]; then'; \
-    echo '  echo -e "\\e[36m"'; \
-    echo '  echo "  +----------------------------------------------+"'; \
-    echo '  echo "  |   ARA TM · Cloud Shell · Railway Ubuntu     |"'; \
-    echo '  echo "  +----------------------------------------------+"'; \
-    echo '  echo -e "\\e[0m"'; \
-    echo '  echo "  User: $(whoami)   |   Host: $(hostname)"'; \
-    echo '  if command -v claude >/dev/null 2>&1; then echo "  Claude Code: ready"; else echo "  Claude Code: not installed"; fi'; \
-    echo '  echo'; \
-    echo 'fi'; \
+RUN mkdir -p /usr/local/share/ara \
+    && { \
+        echo ' █████ █████ █████'; \
+        echo ' █   █ █   █ █   █'; \
+        echo ' █████ █████ █████'; \
+        echo ' █   █ █  █  █   █'; \
+        echo ' █   █ █   █ █   █'; \
+        echo '       TM · CLOUD SHELL'; \
+    } > /usr/local/share/ara/logo.txt \
+    && { \
+        echo '#!/bin/bash'; \
+        echo '# ARA TM — fancy SSH login banner / بنر ورود SSH زیبای ARA TM'; \
+        echo 'if [ -t 1 ]; then'; \
+        echo '  CLAUDE="not installed"'; \
+        echo '  command -v claude >/dev/null 2>&1 && CLAUDE="ready"'; \
+        echo '  neofetch --source /usr/local/share/ara/logo.txt --ascii_colors 6 4 \'; \
+        echo '    --disable resolution de wm wm_theme theme icons \'; \
+        echo '    --exec "Brand" "ARA TM · Cloud Shell" \'; \
+        echo '    --exec "Developer" "Parham_7991" \'; \
+        echo '    --exec "Claude Code" "$CLAUDE" 2>/dev/null \'; \
+        echo '    || { cat /usr/local/share/ara/logo.txt; echo "Developer: Parham_7991"; echo "Claude Code: $CLAUDE"; }'; \
+        echo 'fi'; \
     } > /etc/profile.d/ara-welcome.sh \
     && chmod +x /etc/profile.d/ara-welcome.sh
 
