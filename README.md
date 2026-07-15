@@ -23,6 +23,10 @@
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
 </p>
 
+<p align="center">
+  <a href="https://railway.com/deploy/HBy607?referralCode=MPE9e1&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"></a>
+</p>
+
 ---
 
 A Docker image built for **Railway** that provides an **Ubuntu 24.04** base with an **SSH server (SSHD)** enabled, a **mandatory root password**, a full developer toolkit, and **Claude Code** pre-installed. Connect to your container over SSH and use it as a portable cloud workstation — or pair it with Claude Code for an AI-assisted terminal.

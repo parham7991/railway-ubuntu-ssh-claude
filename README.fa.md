@@ -23,6 +23,10 @@
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
 </p>
 
+<p align="center">
+  <a href="https://railway.com/deploy/HBy607?referralCode=MPE9e1&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"></a>
+</p>
+
 ---
 
 ایمیج داکری ساخته‌شده برای **Railway** که بر پایه **Ubuntu 24.04** با سرور **SSH (SSHD)** فعال، **رمز عبور اجباری root**، یک جعبه‌ابزار کامل توسعه و **Claude Code** از پیش نصب‌شده است. از طریق SSH به کانتینر خود متصل شوید و از آن به عنوان ایستگاه کاری ابری قابل‌حمل استفاده کنید — یا با Claude Code ترمینالی هوشمند داشته باشید.
