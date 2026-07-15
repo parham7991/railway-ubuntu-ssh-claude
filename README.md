@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/railway-settings.png" alt="ARA TM" width="120"/>
+  <img src="assets/aratm.png" alt="ARA TM" width="1000"/>
 </p>
 
 <h1 align="center">ARA TM — Railway Ubuntu SSH Server 🚂</h1>
