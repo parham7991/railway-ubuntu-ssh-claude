@@ -90,6 +90,11 @@ COPY cl /usr/local/bin/cl
 RUN chmod +x /usr/local/bin/cl \
     && ln -sf /usr/local/bin/cl /usr/local/bin/زم
 
+# Copy the "usage" command (Railway trial credit + uptime monitor)
+# کپی دستور «usage» (مانیتور اعتبار تریال و زمان بیداری Railway)
+COPY usage /usr/local/bin/usage
+RUN chmod +x /usr/local/bin/usage
+
 # Expose port 22 (default SSH port) / باز کردن پورت ۲۲ (پورت پیش‌فرض SSH)
 EXPOSE 22
 

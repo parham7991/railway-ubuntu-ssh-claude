@@ -1,0 +1,163 @@
+#!/bin/bash
+# ============================================================
+# ARA TM — Railway Usage Monitor  (command: usage)
+# Developer / توسعه‌دهنده: Parham_7991
+# ============================================================
+# Shows remaining Railway trial credit ($5) and how much uptime is left,
+# based on this container's allocated resources and how long it has run.
+#
+# Two modes:
+#   • ESTIMATE  (no token)  → computes burn from cgroup CPU/RAM + uptime
+#   • LIVE      (RAILWAY_TOKEN set) → also reads real availableCredits from
+#                              the Railway GraphQL API and cross-checks.
+#
+# Rates (Railway 2025, overridable via env):
+#   vCPU  $0.02778/hr · RAM $0.01386/GB/hr · egress $0.05/GB
+#
+# Overrides (handy for testing / custom alloc):
+#   USAGE_CPU=1  USAGE_MEM_GB=2  USAGE_EGRESS_GB=0  USAGE_ELAPSED_SEC=259200
+# ============================================================
+
+# ---- config / قابل تنظیم ----
+TRIAL=${RAILWAY_TRIAL_CREDIT:-5.00}        # total trial credit ($)
+VCPU_RATE_H=${RAILWAY_VCPU_RATE:-0.02778}  # $ / vCPU / hour
+MEM_RATE_H=${RAILWAY_MEM_RATE:-0.01386}    # $ / GB / hour
+EGRESS_RATE=${RAILWAY_EGRESS_RATE:-0.05}   # $ / GB egress
+API="https://backboard.railway.com/graphql/v2"
+
+# ---- colors / رنگ‌ها ----
+R=$'\e[0m'; B=$'\e[1m'
+C_CY=$'\e[38;5;51m'; C_BL=$'\e[38;5;33m'; C_PU=$'\e[38;5;135m'
+C_GR=$'\e[38;5;245m'; C_GN=$'\e[38;5;46m'; C_YL=$'\e[38;5;220m'
+C_RD=$'\e[38;5;196m'; C_WH=$'\e[38;5;231m'
+
+# ---- resource detection / شناسایی منابع ----
+cpu_count() {
+  if [ -r /sys/fs/cgroup/cpu.max ]; then
+    read -r q p < /sys/fs/cgroup/cpu.max
+    if [ "$q" != "max" ] && [ -n "$p" ]; then awk -v q="$q" -v p="$p" 'BEGIN{printf "%.3f", q/p}'; return; fi
+  fi
+  if [ -r /sys/fs/cgroup/cpu/cpu.cfs_quota_us ]; then
+    q=$(cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null)
+    p=$(cat /sys/fs/cgroup/cpu/cpu.cfs_period_us 2>/dev/null || echo 100000)
+    if [ "${q:-0}" -gt 0 ] 2>/dev/null; then awk -v q="$q" -v p="$p" 'BEGIN{printf "%.3f", q/p}'; return; fi
+  fi
+  nproc
+}
+mem_gb() {
+  if [ -r /sys/fs/cgroup/memory.max ]; then
+    v=$(cat /sys/fs/cgroup/memory.max 2>/dev/null)
+    [ "$v" != "max" ] && awk -v b="$v" 'BEGIN{printf "%.3f", b/1073741824}' && return
+  fi
+  if [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+    v=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null)
+    awk -v b="$v" 'BEGIN{printf "%.3f", b/1073741824}'; return
+  fi
+  free -b 2>/dev/null | awk '/Mem:/{printf "%.3f", $2/1073741824}'
+}
+egress_gb() {
+  awk 'NR>2 && $1!="lo:" {tx+=$10} END{printf "%.4f", tx/1073741824}' /proc/net/dev 2>/dev/null || echo 0
+}
+container_age() {
+  # age of PID 1 (this container) in seconds, derived from /proc/1/stat starttime
+  CLK=$(getconf CLK_TCK 2>/dev/null || echo 100)
+  ST=$(awk '{print $22}' /proc/1/stat 2>/dev/null)
+  UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+  NOW=$(date +%s)
+  BOOT=$((NOW - ${UP:-0}))
+  echo $(( NOW - BOOT - ST/CLK ))
+}
+deploy_age() {
+  # age since first deploy (stable across restarts), falls back to container age
+  local m=/var/lib/ara/deploy-start
+  if [ -r "$m" ]; then
+    local ts; ts=$(cat "$m" 2>/dev/null)
+    [ -n "$ts" ] && echo $(( $(date +%s) - ts )) && return
+  fi
+  container_age
+}
+
+# ---- apply overrides / اعمال override ----
+CPU=$(awk -v d="$(cpu_count)" -v o="${USAGE_CPU:-}" 'BEGIN{print (o==""?d:o)}')
+MEM=$(awk -v d="$(mem_gb)"   -v o="${USAGE_MEM_GB:-}" 'BEGIN{print (o==""?d:o)}')
+EG=$(awk -v d="$(egress_gb)" -v o="${USAGE_EGRESS_GB:-}" 'BEGIN{print (o==""?d:o)}')
+AGE=${USAGE_ELAPSED_SEC:-$(deploy_age)}
+
+# ---- math / محاسبات ----
+BURN_H=$(awk -v c="$CPU" -v m="$MEM" -v vc="$VCPU_RATE_H" -v mc="$MEM_RATE_H" \
+  'BEGIN{printf "%.6f", c*vc + m*mc}')
+USED=$(awk -v b="$BURN_H" -v a="$AGE" -v e="$EG" -v er="$EGRESS_RATE" \
+  'BEGIN{printf "%.4f", b*(a/3600) + e*er}')
+REMAIN=$(awk -v t="$TRIAL" -v u="$USED" 'BEGIN{printf "%.4f", t-u}')
+if awk -v r="$REMAIN" 'BEGIN{exit !(r>0)}'; then
+  REMAIN_UP_H=$(awk -v r="$REMAIN" -v b="$BURN_H" 'BEGIN{printf "%.2f", (b>0? r/b : 0)}')
+else
+  REMAIN_UP_H=0
+fi
+PCT=$(awk -v u="$USED" -v t="$TRIAL" 'BEGIN{printf "%d", (t>0? u/t*100 : 100)}')
+[ "$PCT" -gt 100 ] && PCT=100
+TRIAL_DAYS=$(awk -v t="$TRIAL" -v b="$BURN_H" 'BEGIN{printf "%.1f", (b>0? t/b/24 : 0)}')
+
+# ---- live API (if token) / کوئری زنده ----
+MODE="${C_YL}ESTIMATE${R} (no RAILWAY_TOKEN)"
+LIVE_AC=""
+if [ -n "$RAILWAY_TOKEN" ]; then
+  resp=$(curl -s --max-time 12 -X POST "$API" \
+    -H "Authorization: Bearer $RAILWAY_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"query":"{ me { name email billingDetails { availableCredits currentBalance } } }"}' 2>/dev/null)
+  LIVE_AC=$(printf '%s' "$resp" | jq -r '.data.me.billingDetails.availableCredits // empty' 2>/dev/null)
+  LIVE_BAL=$(printf '%s' "$resp" | jq -r '.data.me.billingDetails.currentBalance // empty' 2>/dev/null)
+  if [ -n "$LIVE_AC" ] && [ "$LIVE_AC" != "null" ]; then
+    MODE="${C_GN}LIVE${R} (Railway API)"
+  fi
+fi
+
+# ---- formatters / قالب‌بندی ----
+fmt_dur() { # seconds -> "Xd Yh Zm"
+  local s=$1 d h m
+  d=$((s/86400)); h=$((s%86400/3600)); m=$((s%3600/60))
+  printf "%dd %dh %dm" "$d" "$h" "$m"
+}
+bar() { # percent -> colored progress bar (no leading spaces)
+  local w=30 i
+  local f=$(( PCT * w / 100 ))
+  local col=$C_GN; awk -v p="$PCT" 'BEGIN{exit !(p>=70)}' && col=$C_YL
+  awk -v p="$PCT" 'BEGIN{exit !(p>=90)}' && col=$C_RD
+  printf "${C_GR}[${R}"
+  for i in $(seq 1 $w); do
+    if [ "$i" -le "$f" ]; then printf "${col}${B}█${R}"; else printf "${C_GR}░${R}"; fi
+  done
+  printf "${C_GR}]${R} %d%%" "$PCT"
+}
+
+# ---- render / نمایش ----
+printf '\n'
+printf "  ${C_CY}${B}ARA TM${R} ${C_GR}·${R} ${C_WH}${B}Railway Usage Monitor${R}\n"
+printf "  ${C_GR}────────────────────────────────────────────────\n${R}"
+printf "  ${C_BL}Mode${R}        ${C_GR}│${R} ${MODE}\n"
+printf "  ${C_BL}Trial credit${R} ${C_GR}│${R} ${C_WH}${B}\$%.2f${R}\n" "$TRIAL"
+printf "  ${C_BL}Resources${R}   ${C_GR}│${R} ${C_WH}%.2f vCPU${R} ${C_GR}+${R} ${C_WH}%.2f GB RAM${R} ${C_GR}(egress ≈ %.3f GB)${R}\n" "$CPU" "$MEM" "$EG"
+printf "  ${C_BL}Runtime${R}     ${C_GR}│${R} ${C_WH}%s${R}\n" "$(fmt_dur "$AGE")"
+printf "  ${C_BL}Burn rate${R}   ${C_GR}│${R} ${C_YL}\$%.5f / hr${R}\n" "$BURN_H"
+printf "  ${C_BL}Trial lasts${R} ${C_GR}│${R} ${C_CY}${B}%.1f days${R} ${C_GR}@ current burn${R}\n" "$TRIAL_DAYS"
+printf "  ${C_BL}Used${R}        ${C_GR}│${R} ${C_YL}\$%.2f${R}  " "$USED"
+bar
+printf "\n"
+printf "  ${C_BL}Remaining${R}   ${C_GR}│${R} "
+if awk -v r="$REMAIN" 'BEGIN{exit !(r>0)}'; then
+  printf "${C_GN}${B}\$%.2f${R}" "$REMAIN"
+else
+  printf "${C_RD}${B}\$%.2f (credit exhausted — service will sleep)${R}" "$REMAIN"
+fi
+printf "\n"
+if [ -n "$LIVE_AC" ] && [ "$LIVE_AC" != "null" ]; then
+  printf "  ${C_BL}API credits${R} ${C_GR}│${R} ${C_GN}\$%.2f${R} ${C_GR}(availableCredits)${R}\n" "$LIVE_AC"
+  [ -n "$LIVE_BAL" ] && [ "$LIVE_BAL" != "null" ] && \
+    printf "  ${C_BL}API balance${R} ${C_GR}│${R} ${C_WH}\$%.2f${R}\n" "$LIVE_BAL"
+fi
+printf "  ${C_BL}Uptime left${R} ${C_GR}│${R} ${C_CY}${B}%s${R} ${C_GR}(at current burn)${R}\n" "$(fmt_dur "$(awk -v h="$REMAIN_UP_H" 'BEGIN{printf "%d", h*3600}')")"
+printf "  ${C_GR}────────────────────────────────────────────────\n${R}"
+printf "  ${C_GR}Tip:${R} ${C_WH}export RAILWAY_TOKEN=<account_token>${R} ${C_GR}for exact live credit.${R}\n"
+printf "       ${C_WH}export USAGE_CPU / USAGE_MEM_GB${R} ${C_GR}to override allocation.${R}\n"
+printf '\n'

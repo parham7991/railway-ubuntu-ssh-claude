@@ -49,6 +49,17 @@ msg "Root password set — you can now connect as root" \
     "رمز عبور root تنظیم شد — اکنون می‌توانید با کاربر root متصل شوید"
 
 # ---------------------------------------------------------------
+# DEPLOY START MARKER / نشانگر زمان استقرار
+# ---------------------------------------------------------------
+# Record the first-deploy time once, so the `usage` timer measures from
+# deploy (not from each container restart). Stable across restarts.
+# زمان اولین استقرار را یک‌بار ثبت می‌کند تا تایمر «usage» از زمان استقرار
+# باشد (نه هر ری‌استارت). در برابر ری‌استارت پایدار است.
+DEPLOY_MARK=/var/lib/ara/deploy-start
+mkdir -p /var/lib/ara
+[ -f "$DEPLOY_MARK" ] || date +%s > "$DEPLOY_MARK"
+
+# ---------------------------------------------------------------
 # OPTIONAL SUDO USER / کاربر sudo اختیاری
 # ---------------------------------------------------------------
 # A regular user is no longer required. Provide both SSH_USERNAME and

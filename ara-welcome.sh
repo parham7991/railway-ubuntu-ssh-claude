@@ -62,4 +62,5 @@ row " IP      " "│" "${C_WHITE}${_ip}${C_RESET}"
 row " Claude  " "│" "${_claude}"
 printf '%s\n' "$line"
 printf "  ${C_GREEN}➜${C_RESET} ${C_DIM}Run${C_RESET} ${C_YELLOW}${C_BOLD}cl${C_RESET} ${C_DIM}(or ${C_RESET}${C_YELLOW}${C_BOLD}زم${C_RESET}${C_DIM}) to launch Claude Code in tmux${C_RESET}\n"
+printf "  ${C_GREEN}➜${C_RESET} ${C_DIM}Run${C_RESET} ${C_YELLOW}${C_BOLD}usage${C_RESET} ${C_DIM}to check Railway trial credit & uptime left${C_RESET}\n"
 printf '\n'
