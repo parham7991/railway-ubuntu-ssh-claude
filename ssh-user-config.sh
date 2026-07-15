@@ -145,4 +145,6 @@ configure_claude_settings
 # START SSH SERVER / راه‌اندازی سرور SSH
 # ---------------------------------------------------------------
 msg "Starting SSH server..." "در حال راه‌اندازی سرور SSH..."
+# Generate host keys if missing (idempotent) / تولید کلیدهای میزبان در صورت نبود
+ssh-keygen -A 2>/dev/null || true
 exec /usr/sbin/sshd -D

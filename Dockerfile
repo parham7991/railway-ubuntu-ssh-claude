@@ -28,6 +28,7 @@ RUN sed -i 's/^Components: .*/Components: main restricted universe/' /etc/apt/so
 RUN apt-get update \
     && apt-get install -y \
         ca-certificates gnupg apt-transport-https software-properties-common \
+        openssh-server \
         curl wget \
         iproute2 iputils-ping net-tools dnsutils traceroute whois telnet nmap \
         vim nano micro \
@@ -42,6 +43,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir -p /run/sshd \
     && chmod 755 /run/sshd \
+    && ssh-keygen -A \
     && echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config \
     # Enable root login / فعال کردن ورود root
     && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
