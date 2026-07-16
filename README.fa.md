@@ -58,6 +58,9 @@ A Docker image built for **Railway** that provides an **Ubuntu 24.04** base with
 3. به **Settings → Networking → Public Networking** بروید و یک **TCP Proxy** روی پورت `22` اضافه کنید.
 4. **Redeploy** کنید. Railway دامنه و پورتی برای دسترسی SSH در اختیار شما می‌گذارد.
 
+## 🔑 دریافت توکن‌ها / Get your tokens
+به **توکن GitHub** (برای بک‌آپ خودکار `src`) یا **توکن OpenRouter** (برای Claude Code) نیاز دارید؟ 👉 **[راهنمای خفن گام‌به‌گام را بخوانید → `TOKENS.fa.md`](TOKENS.fa.md)** با لینک‌های مستقیم یک‌کلیک برای ساخت هر توکن.
+
 ## 🌱 متغیرهای محیطی / Environment Variables
 
 | متغیر | الزامی | پیش‌فرض | توضیح |

@@ -81,6 +81,9 @@ This repo ships two Railway config files so it can be deployed as a template:
 3. Redeploy and connect with `ssh root@<domain> -p <port>`.
    Redeploy کنید و با `ssh root@<domain> -p <port>` وصل شوید.
 
+## 🔑 Get your tokens / دریافت توکن‌ها
+Need a **GitHub** token (for automatic `src` backup) or an **OpenRouter** token (for Claude Code)? 👉 **[Read the fancy step‑by‑step guide → `TOKENS.md`](TOKENS.md)** with one‑click direct links to create each token.
+
 ## 🌱 Environment Variables / متغیرهای محیطی
 
 | Variable | Required | Default | Description |
