@@ -153,6 +153,32 @@ configure_claude_settings() {
 configure_claude_settings
 
 # ---------------------------------------------------------------
+# SRC FOLDER ⇄ GITHUB SYNC / همگام‌سازی پوشه src با GitHub
+# ---------------------------------------------------------------
+# /root/src is auto-backed up to a PRIVATE repo (ara-tm-src-<id>) and restored
+# on every start, so your work survives container rebuilds.
+# پوشه src به صورت خودکار در یک مخزن خصوصی (ara-tm-src-<id>) پشتیبان‌گیری شده
+# و در هر اجرا بازیابی می‌شود تا کار شما با بازسازی کانتینر از دست نرود.
+: ${GITHUB_TOKEN:=""}
+SRC_DIR=/root/src
+mkdir -p "$SRC_DIR"
+if [ -n "$GITHUB_TOKEN" ]; then
+    # Create/link the private ARA TM repo immediately, then restore any
+    # existing content from a previous server, then keep it in sync.
+    # مخزن خصوصی ARA TM را بلافاصله ایجاد/پیوند می‌دهیم، سپس محتوای موجود
+    # را از سرور قبلی بازیابی کرده و سپس همگام نگه می‌داریم.
+    repo=$(/usr/local/bin/src-sync --init 2>/dev/null)
+    /usr/local/bin/src-sync --restore 2>&1 | while IFS= read -r l; do msg "$l" "$l"; done
+    msg "src sync ON — /root/src ⇄ private GitHub repo: $repo" \
+        "همگام‌سازی src روشن — پوشه src ⇄ مخزن خصوصی GitHub: $repo"
+    # background watcher survives the exec below
+    nohup /usr/local/bin/src-sync --watch >/var/log/src-sync.log 2>&1 &
+else
+    msg "GitHub token not set — /root/src won't sync (set GITHUB_TOKEN to enable)" \
+        "توکن GitHub ست نشده — پوشه src همگام‌سازی نمی‌شود (برای فعال‌سازی GITHUB_TOKEN را تنظیم کنید)"
+fi
+
+# ---------------------------------------------------------------
 # START SSH SERVER / راه‌اندازی سرور SSH
 # ---------------------------------------------------------------
 msg "Starting SSH server..." "در حال راه‌اندازی سرور SSH..."

@@ -1,7 +1,7 @@
 {
   "name": "ARA TM · Railway Ubuntu SSH + Claude Code",
   "description": "Ubuntu 24.04 SSH server with root access, a full developer toolkit and Claude Code pre-installed. Connect via SSH as root, run Claude Code inside a tmux session. Bilingual (EN/FA), OpenRouter-ready cloud workstation.",
-  "readme": "# ARA TM — Railway Ubuntu SSH + Claude Code\n\nYour own cloud workstation on Railway. SSH in as **root**, with **Claude Code** pre-installed.\n\n## Deploy\n1. Set a **ROOT_PASSWORD** (required) in the Variables tab.\n2. The template opens a **TCP Proxy** on port `22` automatically.\n3. Redeploy, then connect:\n\n```bash\nssh root@<your-railway-domain> -p <port>\n```\n\n## Claude Code\n```bash\ncl      # or:  زم   → tmux session running Claude Code\n```\nSet `ANTHROPIC_AUTH_TOKEN` (optional) to enable Claude Code.\n\n## Variables\n- `ROOT_PASSWORD` (required) — root password\n- `SSH_USERNAME` / `SSH_PASSWORD` (optional) — secondary sudo user\n- `AUTHORIZED_KEYS` (optional) — SSH public key(s) for root\n- `ANTHROPIC_AUTH_TOKEN` (optional) — Claude Code token\n- `APP_LANG` (optional, default `en`) — `en` or `fa`\n\n© ARA TM · Maintained by Parham_7991",
+  "readme": "# ARA TM — Railway Ubuntu SSH + Claude Code\n\nYour own cloud workstation on Railway. SSH in as **root**, with **Claude Code** pre-installed.\n\n## Deploy\n1. Set a **ROOT_PASSWORD** (required) in the Variables tab.\n2. The template opens a **TCP Proxy** on port `22` automatically.\n3. Redeploy, then connect:\n\n```bash\nssh root@<your-railway-domain> -p <port>\n```\n\n## Claude Code\n```bash\ncl      # or:  زم   → tmux session running Claude Code\n```\nSet `ANTHROPIC_AUTH_TOKEN` (optional) to enable Claude Code.\n\n## Variables\n- `ROOT_PASSWORD` (required) — root password\n- `SSH_USERNAME` / `SSH_PASSWORD` (optional) — secondary sudo user\n- `AUTHORIZED_KEYS` (optional) — SSH public key(s) for root\n- `ANTHROPIC_AUTH_TOKEN` (optional) — Claude Code token\n- `GITHUB_TOKEN` (optional) — set it and your `/root/src` is auto-backed up to a private `ara-tm-src-<id>` repo, restored on every redeploy\n- `SYNC_INTERVAL` (optional, default `180`) — sync interval in seconds\n- `APP_LANG` (optional, default `en`) — `en` or `fa`\n\n© ARA TM · Maintained by Parham_7991",
   "services": [
     {
       "name": "ara-ssh",
@@ -16,6 +16,8 @@
         "watchPatterns": [
           "Dockerfile",
           "ssh-user-config.sh",
+          "src-sync.sh",
+          "usage",
           "claude-settings.json",
           "cl"
         ]
@@ -56,6 +58,17 @@
           "required": false,
           "secret": true,
           "description": "Optional Claude Code token (OpenRouter or Anthropic). Applied into the settings on every container start, so editing it takes effect on the next deploy."
+        },
+        "GITHUB_TOKEN": {
+          "required": false,
+          "secret": true,
+          "description": "GitHub token with 'repo' scope. When set, /root/src is auto-backed up to a PRIVATE repo named ara-tm-src-<id> and restored on every redeploy, so your files survive container rebuilds."
+        },
+        "SYNC_INTERVAL": {
+          "required": false,
+          "secret": false,
+          "defaultValue": "180",
+          "description": "Seconds between automatic /root/src syncs (only used when GITHUB_TOKEN is set)."
         },
         "APP_LANG": {
           "required": false,

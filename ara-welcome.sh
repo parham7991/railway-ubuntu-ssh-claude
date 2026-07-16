@@ -60,7 +60,19 @@ row " Memory  " "│" "${C_WHITE}${_mem}${C_RESET}"
 row " Disk    " "│" "${C_WHITE}${_disk}${C_RESET}"
 row " IP      " "│" "${C_WHITE}${_ip}${C_RESET}"
 row " Claude  " "│" "${_claude}"
+
+# src ⇄ GitHub sync status (reads the local repo mark; no network call)
+# وضعیت همگام‌سازی src با GitHub (نشانگر محلی مخزن را می‌خواند؛ بدون فراخوانی شبکه)
+if [ -n "${GITHUB_TOKEN:-}" ] && [ -f /var/lib/ara/src-repo ]; then
+  _repo="$(cat /var/lib/ara/src-repo 2>/dev/null)"
+  _src="${C_GREEN}● synced → ${C_RESET}${C_WHITE}${_repo}${C_RESET}"
+else
+  _src="${C_GREY}● off — set GITHUB_TOKEN to backup${C_RESET}"
+fi
+row " src     " "│" "${_src}"
+
 printf '%s\n' "$line"
 printf "  ${C_GREEN}➜${C_RESET} ${C_DIM}Run${C_RESET} ${C_YELLOW}${C_BOLD}cl${C_RESET} ${C_DIM}(or ${C_RESET}${C_YELLOW}${C_BOLD}زم${C_RESET}${C_DIM}) to launch Claude Code in tmux${C_RESET}\n"
 printf "  ${C_GREEN}➜${C_RESET} ${C_DIM}Run${C_RESET} ${C_YELLOW}${C_BOLD}usage${C_RESET} ${C_DIM}to check Railway trial credit & uptime left${C_RESET}\n"
+printf "  ${C_GREEN}➜${C_RESET} ${C_DIM}Run${C_RESET} ${C_YELLOW}${C_BOLD}src-sync --status${C_RESET} ${C_DIM}to see your private backup repo${C_RESET}\n"
 printf '\n'

@@ -95,6 +95,12 @@ RUN chmod +x /usr/local/bin/cl \
 COPY usage /usr/local/bin/usage
 RUN chmod +x /usr/local/bin/usage
 
+# Copy the "src-sync" command (/root/src ⇄ private GitHub repo for persistence)
+# کپی دستور «src-sync» (همگام‌سازی پوشه src با مخزن خصوصی GitHub برای پایداری داده‌ها)
+COPY src-sync.sh /usr/local/bin/src-sync
+RUN chmod +x /usr/local/bin/src-sync \
+    && mkdir -p /root/src
+
 # Expose port 22 (default SSH port) / باز کردن پورت ۲۲ (پورت پیش‌فرض SSH)
 EXPOSE 22
 

@@ -67,6 +67,8 @@ A Docker image built for **Railway** that provides an **Ubuntu 24.04** base with
 | `SSH_PASSWORD` | ⬜ خیر | — | رمز کاربر اختیاری. |
 | `AUTHORIZED_KEYS` | ⬜ خیر | — | کلید(های) عمومی SSH برای root (ورود با رمز همچنان روشن می‌ماند). |
 | `ANTHROPIC_AUTH_TOKEN` | ⬜ خیر | — | توکن Claude Code (OpenRouter / Anthropic). روی هر دیپلوی اعمال می‌شود. |
+| `GITHUB_TOKEN` | ⬜ خیر | — | توکن GitHub (scope: repo). وقتی ست شود، پوشه `src` به صورت خودکار در مخزنی **خصوصی** با نام `ara-tm-src-<id>` پشتیبان‌گیری و روی هر بازسازی بازیابی می‌شود — فایل‌های شما با ری‌استارت کانتینر از دست نمی‌روند. |
+| `SYNC_INTERVAL` | ⬜ خیر | `180` | فاصله همگام‌سازی خودکار `src` بر حسب ثانیه (وقتی `GITHUB_TOKEN` ست باشد). |
 | `APP_LANG` | ⬜ خیر | `en` | زبان پیام‌ها: `en` یا `fa`. |
 
 > اتصال Claude Code (آدرس پایه، نام مدل‌ها، تم) از پیش در `claude-settings.json` تنظیم شده و پیش‌فرض روی **OpenRouter** است.

@@ -90,6 +90,8 @@ This repo ships two Railway config files so it can be deployed as a template:
 | `SSH_PASSWORD` | ⬜ No | — | Password for the optional user. / رمز کاربر اختیاری. |
 | `AUTHORIZED_KEYS` | ⬜ No | — | SSH public key(s) for root key-based auth (password login stays on). / کلید(های) عمومی SSH برای root. |
 | `ANTHROPIC_AUTH_TOKEN` | ⬜ No | — | Token for Claude Code (OpenRouter / Anthropic). Applied on every deploy. / توکن Claude Code. روی هر دیپلوی اعمال می‌شود. |
+| `GITHUB_TOKEN` | ⬜ No | — | GitHub token (`repo` scope). When set, `/root/src` is auto-backed up to a **private** repo `ara-tm-src-<id>` and restored on every redeploy — your files survive container rebuilds. / توکن GitHub (scope: repo). وقتی ست شود، پوشه `src` به صورت خودکار در مخزنی **خصوصی** پشتیبان‌گیری و روی هر بازسازی بازیابی می‌شود. |
+| `SYNC_INTERVAL` | ⬜ No | `180` | Seconds between automatic `src` syncs (when `GITHUB_TOKEN` is set). / فاصله همگام‌سازی خودکار بر حسب ثانیه. |
 | `APP_LANG` | ⬜ No | `en` | Runtime message language: `en` or `fa`. / زبان پیام‌ها: `en` یا `fa`. |
 
 > The Claude Code connection (`ANTHROPIC_BASE_URL`, model names, theme) is pre-configured in `claude-settings.json` and points to **OpenRouter** by default.
