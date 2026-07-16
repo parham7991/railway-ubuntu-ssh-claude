@@ -162,6 +162,15 @@ configure_claude_settings
 : ${GITHUB_TOKEN:=""}
 SRC_DIR=/root/src
 mkdir -p "$SRC_DIR"
+# Persist the token so interactive SSH sessions can use src-sync too.
+# sshd login shells do NOT inherit the container env, so GITHUB_TOKEN would
+# otherwise be missing when you run `src-sync` by hand over SSH.
+# توکن را برای نشست‌های تعاملی SSH ذخیره می‌کنیم؛ پوسته‌های ورود sshd
+# محیط کانتینر را به ارث نمی‌برند، پس وإلا با دستور دستی src-sync توکن گم می‌شد.
+if [ -n "$GITHUB_TOKEN" ]; then
+    echo "$GITHUB_TOKEN" > /var/lib/ara/github-token
+    chmod 600 /var/lib/ara/github-token
+fi
 if [ -n "$GITHUB_TOKEN" ]; then
     # Create/link the private ARA TM repo immediately, then restore any
     # existing content from a previous server, then keep it in sync.

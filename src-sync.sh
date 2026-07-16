@@ -7,8 +7,10 @@
 # so your work survives Railway container rebuilds.
 #
 #   src-sync            push now (backup)
+#   src-sync backup     push now (backup) — same as above
 #   src-sync --watch    loop push every SYNC_INTERVAL sec (default 180)
 #   src-sync --restore  pull from GitHub into /root/src
+#   src-sync restore    pull from GitHub into /root/src — same as above
 #   src-sync --init     (re)create the repo + link /root/src
 #   src-sync --status   show linked repo + last commit
 #
@@ -22,6 +24,12 @@ STATE=/var/lib/ara
 MARK="$STATE/src-repo"          # remembers the chosen repo name
 API=https://api.github.com
 TOKEN="${GITHUB_TOKEN:-}"
+# Fallback: interactive SSH sessions don't inherit the container env, so the
+# token (saved at startup by ssh-user-config.sh) is read from this file.
+# پشتیبان: نشست‌های تعاملی SSH محیط کانتینر را به ارث نمی‌برند؛ توکن که هنگام
+# راه‌اندازی توسط ssh-user-config.sh ذخیره شده از این فایل خوانده می‌شود.
+[ -z "$TOKEN" ] && [ -f /var/lib/ara/github-token ] \
+    && TOKEN="$(cat /var/lib/ara/github-token 2>/dev/null)"
 INTERVAL="${SYNC_INTERVAL:-180}"
 
 die()  { echo "src-sync: $*" >&2; exit 1; }
@@ -142,9 +150,9 @@ do_status() {
 
 case "${1:-push}" in
   --init)    do_init ;;
-  --restore) do_restore ;;
+  --restore|restore) do_restore ;;
   --watch)   do_watch ;;
   --status)  do_status ;;
-  push|--push) do_push ;;
-  *) echo "usage: src-sync [--init|--restore|--watch|--status|push]"; exit 1 ;;
+  push|--push|backup) do_push ;;
+  *) echo "usage: src-sync [backup|restore|--init|--restore|--watch|--status|push]"; exit 1 ;;
 esac
