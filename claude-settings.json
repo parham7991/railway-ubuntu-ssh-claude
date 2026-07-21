@@ -3,9 +3,9 @@
     "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
     "ANTHROPIC_AUTH_TOKEN": "__ANTHROPIC_AUTH_TOKEN__",
     "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "tencent/hy3:free",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "tencent/hy3:free",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "tencent/hy3:free"
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free"
   },
   "theme": "dark"
 }
