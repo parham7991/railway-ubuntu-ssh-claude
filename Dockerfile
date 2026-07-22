@@ -62,16 +62,32 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 ENV TERM=xterm-256color
 
-# Claude Code settings (ARA TM defaults). The auth token is NOT baked in — it
-# must be supplied by the builder via the ANTHROPIC_AUTH_TOKEN build arg, or at
-# runtime via the ANTHROPIC_AUTH_TOKEN environment variable (applied on every
-# container start by ssh-user-config.sh).
-# تنظیمات Claude Code (پیش‌فرض‌های ARA TM). توکن احراز هویت بیک نمی‌شود و باید
-# توسط سازنده از طریق آرگومان ساخت ANTHROPIC_AUTH_TOKEN، یا در زمان اجرا از طریق
-# متغیر محیطی ANTHROPIC_AUTH_TOKEN (اعمال‌شده روی هر اجرای کانتینر توسط ssh-user-config.sh) تامین شود.
-ARG ANTHROPIC_AUTH_TOKEN=""
+# ============================================================
+# Claude Code settings (ARA TM defaults)
+# تنظیمات Claude Code (پیش‌فرض‌های ARA TM)
+# ============================================================
+# The auth token is NOT baked into the image at build time — that would
+# fail BuildKit's SecretsUsedInArgOrEnv check on Railway.
+# The token is injected at RUNTIME by ssh-user-config.sh, which reads the
+# ANTHROPIC_AUTH_TOKEN env var (set as a Railway Variable) and patches
+# /root/.claude/settings.json with `jq`.
+#
+# توکن احراز هویت در زمان build در ایمیج بیک نمی‌شود — این کار check
+# BuildKit با نام SecretsUsedInArgOrEnv را در Railway fail می‌کند.
+# توکن در زمان RUNTIME توسط ssh-user-config.sh تزریق می‌شود که
+# متغیر محیطی ANTHROPIC_AUTH_TOKEN (تنظیم‌شده به عنوان Railway Variable)
+# را می‌خواند و با jq فایل /root/.claude/settings.json را patch می‌کند.
+# ============================================================
+
+# Copy the default Claude Code settings. The ANTHROPIC_AUTH_TOKEN placeholder
+# (__ANTHROPIC_AUTH_TOKEN__) is replaced at runtime by ssh-user-config.sh
+# only if the env var is set; otherwise the field is patched to an empty
+# string by the same script.
+# کپی تنظیمات پیش‌فرض Claude Code. placeholder مربوط به ANTHROPIC_AUTH_TOKEN
+# (__ANTHROPIC_AUTH_TOKEN__) در زمان runtime توسط ssh-user-config.sh فقط در
+# صورتی که env var ست شده باشد جایگزین می‌شود؛ در غیر این صورت همین اسکریپت
+# فیلد را به رشته خالی patch می‌کند.
 COPY claude-settings.json /root/.claude/settings.json
-RUN sed -i "s|__ANTHROPIC_AUTH_TOKEN__|${ANTHROPIC_AUTH_TOKEN}|g" /root/.claude/settings.json
 
 # Install Claude Code (official CLI by Anthropic) globally
 # نصب سراسری Claude Code (رابط خط فرمان رسمی Anthropic)
